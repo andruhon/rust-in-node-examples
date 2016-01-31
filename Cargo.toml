@@ -3,6 +3,9 @@ name = "embed"
 version = "0.0.1"
 authors = ["Andrew Kondratev <andrew@kondratev.pro>"]
 
+[dependencies]
+libc = "0.2.6"
+
 [lib]
 name = "embed"
 crate-type = ["dylib"]
