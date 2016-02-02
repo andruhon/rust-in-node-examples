@@ -4,7 +4,6 @@ use libc::c_char;
 use std::ffi::{CStr,CString};
 use std::vec::{Vec};
 
-
 #[no_mangle]
 pub extern fn rs_int_in_int_out(input: i32) -> i32{
     input*2
@@ -49,4 +48,24 @@ pub extern fn rs_numeric_array_in_numeric_array_out(src_raw: *const u32, dst: *m
     unsafe{ std::ptr::copy(res.as_ptr(), dst, res_size); };
 
     return res_size;
+}
+
+
+#[repr(C)]
+pub struct SomeStruct {
+    some_item: i32,
+    another_item: i32,
+    test: i32,
+    float_item: f32
+}
+
+#[no_mangle]
+pub extern fn rs_struct_out() -> SomeStruct {
+    let sss = SomeStruct {
+        some_item: 3,
+        another_item: 4,
+        test: 5,
+        float_item: 0.7_f32
+    };
+    return sss;
 }

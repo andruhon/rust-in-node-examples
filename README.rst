@@ -13,6 +13,13 @@ List of available functions:
 * int to int function
 * string to string function
 * numeric array to numeric array function
+* void to struct as an object
+
+Issues
+------
+
+I'm using some non cross platform unit sizes, probably 32 bit specific. Will test and fix it later.
+
 
 Links
 -----

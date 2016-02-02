@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <node.h>
+#include <stdio.h>
 
 /*
 // Public interfaces of functions could be defined here
@@ -16,11 +17,19 @@ NAN_METHOD(int_in_int_out);
 
 #endif
 
+struct SomeStruct {
+    int some_item;
+    int another_item;
+    int test;
+    float float_item;
+};
+
 /* extern interface for Rust functions */
 extern "C" {
   int32_t rs_int_in_int_out(int32_t input);
   int32_t rs_string_in_string_out(char* input, char* output);
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
+  SomeStruct rs_struct_out();
 }
 
 /**
@@ -102,6 +111,17 @@ NAN_METHOD(numeric_array_in_numeric_array_out) {
   info.GetReturnValue().Set(arr);
 }
 
+NAN_METHOD(struct_out_as_object) {
+  SomeStruct outstru = rs_struct_out();
+
+  v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+  Nan::Set(obj, Nan::New("some_item").ToLocalChecked(), Nan::New(outstru.some_item));
+  Nan::Set(obj, Nan::New("another_item").ToLocalChecked(), Nan::New(outstru.another_item));
+  Nan::Set(obj, Nan::New("test").ToLocalChecked(), Nan::New(outstru.test));
+  Nan::Set(obj, Nan::New("float_item").ToLocalChecked(), Nan::New(outstru.float_item));
+  info.GetReturnValue().Set(obj);
+}
+
 /* create V8 functions available in NodeJS */
 using v8::FunctionTemplate;
 
@@ -114,6 +134,8 @@ NAN_MODULE_INIT(InitAll) {;
     Nan::GetFunction(Nan::New<FunctionTemplate>(bin_string_in_string_out)).ToLocalChecked());
   Nan::Set(target, Nan::New("numeric_array_in_numeric_array_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(numeric_array_in_numeric_array_out)).ToLocalChecked());
+  Nan::Set(target, Nan::New("struct_out_as_object").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(struct_out_as_object)).ToLocalChecked());
 }
 
 

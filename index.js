@@ -17,3 +17,6 @@ console.log(addon.bin_string_in_string_out(buf, length));
 
 console.log(os.EOL+"numeric_array_in_numeric_array_out:");
 console.log(addon.numeric_array_in_numeric_array_out([1,2,3,4]));
+
+console.log(os.EOL+"struct_out:");
+console.log(addon.struct_out_as_object());
