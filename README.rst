@@ -25,6 +25,7 @@ Links
 -----
 
 * https://github.com/nodejs/nan/
+* https://github.com/wtfil/rust-in-node
 * https://github.com/fcanas/node-native-boilerplate/
 * https://github.com/rustbridge/neon/
 * http://www.puritys.me/docs-blog/article-286-How-to-pass-the-paramater-of-Node.js-or-io.js-into-native-C/C++-function..html
