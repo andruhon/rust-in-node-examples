@@ -20,3 +20,10 @@ console.log(addon.numeric_array_in_numeric_array_out([1,2,3,4]));
 
 console.log(os.EOL+"struct_out:");
 console.log(addon.struct_out_as_object());
+
+console.log(os.EOL+"object_as_struct_in_bool_out:");
+console.log(addon.object_as_struct_in_bool_out({
+  int_setting: 42,
+  float_setting: 3.14,
+  bool_setting: true
+}));

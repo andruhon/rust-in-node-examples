@@ -24,12 +24,19 @@ struct SomeStruct {
     float float_item;
 };
 
+struct OtherStruct {
+  int int_setting;
+  float float_setting;
+  bool bool_setting;
+};
+
 /* extern interface for Rust functions */
 extern "C" {
   int32_t rs_int_in_int_out(int32_t input);
   int32_t rs_string_in_string_out(char* input, char* output);
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
   SomeStruct rs_struct_out();
+  bool rs_object_as_struct_in_bool_out(OtherStruct object_as_struct_in_bool_out);
 }
 
 /**
@@ -114,12 +121,33 @@ NAN_METHOD(numeric_array_in_numeric_array_out) {
 NAN_METHOD(struct_out_as_object) {
   SomeStruct outstru = rs_struct_out();
 
-  v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+  Local<v8::Object> obj = Nan::New<Object>();
   Nan::Set(obj, Nan::New("some_item").ToLocalChecked(), Nan::New(outstru.some_item));
   Nan::Set(obj, Nan::New("another_item").ToLocalChecked(), Nan::New(outstru.another_item));
   Nan::Set(obj, Nan::New("test").ToLocalChecked(), Nan::New(outstru.test));
   Nan::Set(obj, Nan::New("float_item").ToLocalChecked(), Nan::New(outstru.float_item));
   info.GetReturnValue().Set(obj);
+}
+
+NAN_METHOD(object_as_struct_in_bool_out) {
+  if (info[0]->IsObject()) {
+    /* get data from the js object */
+    Local<Object> obj = Nan::To<Object>(info[0]).ToLocalChecked();
+    int int_setting = Nan::To<int>(Nan::Get(obj, Nan::New("int_setting").ToLocalChecked()).ToLocalChecked()).FromJust();
+    double float_setting = Nan::To<double>(Nan::Get(obj, Nan::New("float_setting").ToLocalChecked()).ToLocalChecked()).FromJust();
+    bool bool_setting = Nan::To<bool>(Nan::Get(obj, Nan::New("bool_setting").ToLocalChecked()).ToLocalChecked()).FromJust();
+
+    /* define struct with data */
+    OtherStruct instru;
+    instru.int_setting = int_setting;
+    instru.float_setting = float_setting;
+    instru.bool_setting = bool_setting;
+
+    /* send struct to the rust function */
+    bool result = rs_object_as_struct_in_bool_out(instru);
+    info.GetReturnValue().Set(result);
+  }
+  info.GetReturnValue().Set(false);
 }
 
 /* create V8 functions available in NodeJS */
@@ -136,6 +164,8 @@ NAN_MODULE_INIT(InitAll) {;
     Nan::GetFunction(Nan::New<FunctionTemplate>(numeric_array_in_numeric_array_out)).ToLocalChecked());
   Nan::Set(target, Nan::New("struct_out_as_object").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(struct_out_as_object)).ToLocalChecked());
+  Nan::Set(target, Nan::New("object_as_struct_in_bool_out").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(object_as_struct_in_bool_out)).ToLocalChecked());
 }
 
 

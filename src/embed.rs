@@ -69,3 +69,17 @@ pub extern fn rs_struct_out() -> SomeStruct {
     };
     return sss;
 }
+
+
+#[repr(C)]
+pub struct OtherStruct {
+  int_setting: i32,
+  float_setting: f32,
+  bool_setting: bool
+}
+
+#[no_mangle]
+pub extern fn rs_object_as_struct_in_bool_out(data: OtherStruct) -> bool {
+    println!("{}, {}, {}",data.int_setting, data.float_setting, data.bool_setting);
+    true
+}

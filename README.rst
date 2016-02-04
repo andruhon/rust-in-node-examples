@@ -14,6 +14,7 @@ List of available functions:
 * string to string function
 * numeric array to numeric array function
 * void to struct as an object
+* struct as object to bool
 
 Issues
 ------
