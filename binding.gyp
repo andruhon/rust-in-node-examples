@@ -8,8 +8,22 @@
         "include_dirs" : [
 	 			"<!(node -e \"require('nan')\")"
 		],
-		"libraries": [
-			"../target/debug/embed.dll.lib"
+		"conditions": [
+			['OS=="linux"', {
+				"libraries": [
+					"<(module_root_dir)/target/release/libembed.so"
+				]
+			}],
+			['OS=="mac"', {
+				"libraries": [
+					"../target/release/libembed.dylib"
+				]
+			}],
+			['OS=="win"', {
+				"libraries": [
+					"../target/release/embed.dll.lib"
+				]
+			}]
 		]
 	}]
 }

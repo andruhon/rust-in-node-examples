@@ -1,15 +1,15 @@
 {
-  "name": "rust-bridge-lite",
+  "name": "rust-in-node-examples",
   "version": "0.0.1",
-  "description": "Simple rust to node bridge",
+  "description": "Native Rust extension for Node JS",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-addon": "node-gyp configure && node-gyp build",
     "clean-addon": "node-gyp clean",
-    "build-rust": "cargo build",
+    "build-rust": "cargo build --release",
     "clean-rust": "cargo clean",
-    "install-rust": "xcopy target\\debug\\embed.* build\\Release /Y",
+    "install-rust": "node install-rust.js",
     "rebuild-rust": "npm run build-rust && npm run install-rust",
     "build": "npm run build-rust && npm run build-addon && npm run install-rust",
     "clean": "npm run clean-rust && npm run clean-addon"

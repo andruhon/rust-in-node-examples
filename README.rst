@@ -5,9 +5,6 @@ Experimenting with adding Rust extension into NodeJS via C++ addon
 
 Work still in progress
 
-Windows only for this moment.
-However it is easy to amend binding.gyp and package.json in order to make it work on other OSes.
-
 List of available functions:
 
 * int to int function
@@ -16,10 +13,6 @@ List of available functions:
 * void to struct as an object
 * struct as object to bool
 
-Issues
-------
-
-I'm using some non cross platform unit sizes, probably 32 bit specific. Will test and fix it later.
 
 
 Links
