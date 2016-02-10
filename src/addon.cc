@@ -222,7 +222,6 @@ class MyWorker : public AsyncWorker {
 NAN_METHOD(slow_func_in_c_thread) {
     int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
     Nan::Callback * callback = new Nan::Callback(info[1].As<v8::Function>());
-    int points = 1;
     AsyncQueueWorker(new MyWorker(callback, value));
 }
 

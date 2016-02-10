@@ -119,9 +119,11 @@ pub  extern fn rs_set_initial_state(state: c_int) {
 
 #[no_mangle]
 pub extern fn rs_slow_func(num: c_int) -> c_int {
+    //If we take the lock before this long 1 sec "computation"
+    //it will cause functions to run sequentally because of locks
+    thread::sleep(Duration::new(1, 0));
     let holder = unsafe {(*MUT_STATE).clone()};
     let mut mutint = holder.lock().unwrap();
-    thread::sleep(Duration::new(1, 0));
     *mutint += 1;
     println!("rs_slow_func internal state {}", *mutint);
     let multiplier = *mutint;

@@ -1,6 +1,6 @@
 {
   "name": "rust-in-node-examples",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Native Rust extension for Node JS",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "clean-addon": "node-gyp clean",
     "build-rust": "cargo build --release",
     "clean-rust": "cargo clean",
-    "install-rust": "node install-rust.js",
+    "install-rust": "node ./build-scripts/install-rust.js",
     "rebuild-rust": "npm run build-rust && npm run install-rust",
     "build": "npm run build-rust && npm run build-addon && npm run install-rust",
     "clean": "npm run clean-rust && npm run clean-addon"
