@@ -12,7 +12,7 @@ List of available functions:
 * numeric array to numeric array function
 * void to struct as an object
 * struct as object to bool
-
+* callbacks
 
 
 Links
@@ -23,3 +23,9 @@ Links
 * https://github.com/fcanas/node-native-boilerplate/
 * https://github.com/rustbridge/neon/
 * http://www.puritys.me/docs-blog/article-286-How-to-pass-the-paramater-of-Node.js-or-io.js-into-native-C/C++-function..html
+
+
+Disclaimer
+----------
+
+These examples are possibly unsafe due to my insufficient competence in subject.

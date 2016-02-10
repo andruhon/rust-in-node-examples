@@ -9,6 +9,10 @@
 #include <node.h>
 #include <stdio.h>
 
+
+using namespace std;
+using namespace v8;
+
 /*
 // Public interfaces of functions could be defined here
 NAN_METHOD(int_in_int_out);
@@ -37,6 +41,9 @@ extern "C" {
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
   SomeStruct rs_struct_out();
   bool rs_object_as_struct_in_bool_out(OtherStruct object_as_struct_in_bool_out);
+  // void rs_num_c_func_with_c_callback(int32_t input, void (*callback)(int32_t));
+  void rs_set_initial_state(int32_t input);
+  int32_t rs_slow_func(int32_t input);
 }
 
 /**
@@ -47,8 +54,6 @@ const int ADDON_BUFFER_SIZE = 16383;
 //Header end
 
 
-using namespace std;
-using namespace v8;
 
 NAN_METHOD(int_in_int_out) {
   int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
@@ -150,6 +155,77 @@ NAN_METHOD(object_as_struct_in_bool_out) {
   info.GetReturnValue().Set(false);
 }
 
+// extern "C" void mycallback(int32_t val) {
+//   // Left here for the reference
+//   cout << "num_c_func_with_c_callback in C++: ";
+//   cout << val;
+//   cout << "\n";
+// }
+// NAN_METHOD(num_c_func_with_c_callback) {
+//     int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
+//
+//     rs_num_c_func_with_c_callback(value, &mycallback);
+// }
+
+NAN_METHOD(set_initial_state) {
+  int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
+
+  rs_set_initial_state(value);
+}
+
+
+using v8::Function;
+using v8::Local;
+using v8::Number;
+using v8::Value;
+using Nan::AsyncQueueWorker;
+using Nan::AsyncWorker;
+using Nan::Callback;
+using Nan::New;
+using Nan::Null;
+using Nan::To;
+
+/* a copypaste from NAN async example */
+class MyWorker : public AsyncWorker {
+ public:
+  MyWorker(Callback *callback, int value)
+    : AsyncWorker(callback), value(value), result(0) {}
+  ~MyWorker() {}
+
+  // Executed inside the worker-thread.
+  // It is not safe to access V8, or V8 data structures
+  // here, so everything we need for input and output
+  // should go on `this`.
+  void Execute () {
+    result = rs_slow_func(value);
+  }
+
+  // Executed when the async work is complete
+  // this function will be run inside the main event loop
+  // so it is safe to use V8 again
+  void HandleOKCallback () {
+    Nan::HandleScope scope;
+
+    Local<Value> argv[] = {
+        Null()
+      , New<Number>(result)
+    };
+
+    callback->Call(2, argv);
+  }
+
+ private:
+  int value;
+  int result;
+};
+
+NAN_METHOD(slow_func_in_c_thread) {
+    int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
+    Nan::Callback * callback = new Nan::Callback(info[1].As<v8::Function>());
+    int points = 1;
+    AsyncQueueWorker(new MyWorker(callback, value));
+}
+
 /* create V8 functions available in NodeJS */
 using v8::FunctionTemplate;
 
@@ -166,6 +242,12 @@ NAN_MODULE_INIT(InitAll) {;
     Nan::GetFunction(Nan::New<FunctionTemplate>(struct_out_as_object)).ToLocalChecked());
   Nan::Set(target, Nan::New("object_as_struct_in_bool_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(object_as_struct_in_bool_out)).ToLocalChecked());
+  // Nan::Set(target, Nan::New("num_c_func_with_c_callback").ToLocalChecked(),
+  //   Nan::GetFunction(Nan::New<FunctionTemplate>(num_c_func_with_c_callback)).ToLocalChecked());
+  Nan::Set(target, Nan::New("set_initial_state").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(set_initial_state)).ToLocalChecked());
+  Nan::Set(target, Nan::New("slow_func_in_c_thread").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(slow_func_in_c_thread)).ToLocalChecked());
 }
 
 

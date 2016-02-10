@@ -1,8 +1,15 @@
+#![feature(const_fn)]
 extern crate libc;
 
 use libc::{c_char,c_int, c_float};
 use std::ffi::{CStr,CString};
 use std::vec::{Vec};
+
+use std::{mem,thread};
+use std::time::Duration;
+
+use std::sync::{Mutex, Arc};
+
 
 #[no_mangle]
 pub extern fn rs_int_in_int_out(input: c_int) -> c_int{
@@ -82,4 +89,41 @@ pub struct OtherStruct {
 pub extern fn rs_object_as_struct_in_bool_out(data: OtherStruct) -> bool {
     println!("{}, {}, {}",data.int_setting, data.float_setting, data.bool_setting);
     true
+}
+
+// #[no_mangle]
+// pub extern fn rs_num_c_func_with_c_callback(num: c_int, callback: extern fn(c_int)) {
+//     //Left here for the reference
+//     let handle = thread::spawn(move || {
+//         let holder = unsafe {(*MUT_STATE).clone()};
+//         let mut mutint = holder.lock().unwrap();
+//         *mutint += 1;
+//         println!("mutint {}", *mutint);
+//         thread::sleep(Duration::new(2, 0));
+//         unsafe { callback(num*2); }
+//     });
+// }
+
+// The code below works well asynchronously with threads managed by node/NAN in C++
+// and mutable state / locks managed by Rust
+static mut MUT_STATE: *const Arc<Mutex<c_int>> = std::ptr::null();
+
+#[no_mangle]
+pub  extern fn rs_set_initial_state(state: c_int) {
+    unsafe {
+        let singleton = Arc::new(Mutex::new(state));
+        MUT_STATE = mem::transmute(Box::new(singleton));
+    }
+}
+
+
+#[no_mangle]
+pub extern fn rs_slow_func(num: c_int) -> c_int {
+    let holder = unsafe {(*MUT_STATE).clone()};
+    let mut mutint = holder.lock().unwrap();
+    thread::sleep(Duration::new(1, 0));
+    *mutint += 1;
+    println!("rs_slow_func internal state {}", *mutint);
+    let multiplier = *mutint;
+    num * multiplier
 }
