@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "node -v",
+    "postinstall": "npm run build",
     "build-addon": "node-gyp configure && node-gyp build",
     "clean-addon": "node-gyp clean",
     "build-rust": "cargo build --release",
