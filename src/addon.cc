@@ -37,6 +37,8 @@ struct OtherStruct {
 /* extern interface for Rust functions */
 extern "C" {
   int32_t rs_int_in_int_out(int32_t input);
+  void* rs_drop(void* input);
+  char* rs_rust_managed_string(char* input);
   int32_t rs_string_in_string_out(char* input, char* output);
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
   SomeStruct rs_struct_out();
@@ -60,6 +62,20 @@ NAN_METHOD(int_in_int_out) {
 
   int result = rs_int_in_int_out(value);
   info.GetReturnValue().Set(result);
+}
+
+NAN_METHOD(rs_rust_managed_string) {
+  Nan::HandleScope scope;
+  String::Utf8Value cmd(info[0]);
+  string s = string(*cmd);
+  char *cstr = new char[s.length() + 1];
+  strcpy(cstr, s.c_str());
+
+  /* get string from rust */
+  char *from_rust = rs_rust_managed_string(cstr);
+  info.GetReturnValue().Set(Nan::New<String>(from_rust).ToLocalChecked());
+  //free(from_rust);
+  rs_drop(from_rust);
 }
 
 NAN_METHOD(string_in_string_out) {
@@ -231,6 +247,8 @@ using v8::FunctionTemplate;
 NAN_MODULE_INIT(InitAll) {;
   Nan::Set(target, Nan::New("int_in_int_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(int_in_int_out)).ToLocalChecked());
+  Nan::Set(target, Nan::New("rs_rust_managed_string").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(rs_rust_managed_string)).ToLocalChecked());
   Nan::Set(target, Nan::New("string_in_string_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(string_in_string_out)).ToLocalChecked());
   Nan::Set(target, Nan::New("bin_string_in_string_out").ToLocalChecked(),

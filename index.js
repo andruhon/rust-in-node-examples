@@ -1,11 +1,9 @@
-os = require('os');
-addon = require('./build/Release/addon');
+var os = require('os');
+var assert = require('assert');
+var addon = require('./build/Release/addon');
 
 console.log(os.EOL+"int_in_int_out:");
 console.log(addon.int_in_int_out(2));
-
-console.log(os.EOL+"string_in_string_out:");
-console.log(addon.string_in_string_out("String from JS UTF-8 with a lot of non latin symbols АБВГДеёжйклмнопрстуфхцчшщЫЭЮЯ"));
 
 
 // TODO: this one sometimes crashing, to investigate
@@ -48,3 +46,12 @@ addon.slow_func_in_c_thread(12, function(){
   addon.slow_func_in_c_thread(14, console.log);
   addon.slow_func_in_c_thread(18, console.log);
 });
+
+console.log(os.EOL+"rust_managed_string:");
+var inString = "String from JS UTF-8 with a lot of non latin symbols dfgsdf gsdf gs dfg sdfg sdf gsdf gsdf gsdf gsdfg sdfg sdfg serg sdfgx dfg dergzx dfg xdrtgx dgfhx fgh АБВГДеёжйклмнопрстуфхцчшщЫЭЮЯ";
+var lastOutStr;
+for (var i = 0; i <=100; i++) {
+  lastOutStr = addon.rs_rust_managed_string(inString)
+  assert(lastOutStr==(inString+" append from Rust"), "Should not loose data");
+}
+console.log(lastOutStr);

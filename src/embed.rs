@@ -1,7 +1,7 @@
 #![feature(const_fn)]
 extern crate libc;
 
-use libc::{c_char,c_int, c_float};
+use libc::{c_char,c_int, c_float, c_void};
 use std::ffi::{CStr,CString};
 use std::vec::{Vec};
 
@@ -10,14 +10,39 @@ use std::time::Duration;
 
 use std::sync::{Mutex, Arc};
 
+#[no_mangle]
+pub extern "C" fn rs_drop(ptr: *const c_void) {
+  //Used to drop rust allocated pointers from C
+  mem::drop(ptr);
+}
 
 #[no_mangle]
-pub extern fn rs_int_in_int_out(input: c_int) -> c_int{
+pub extern "C" fn rs_rust_managed_string(s_raw: *const c_char) -> *mut c_char {
+    // take string from the input C string
+    if s_raw.is_null() { panic!(); }
+
+    let c_str: &CStr = unsafe { CStr::from_ptr(s_raw) };
+    let buf: &[u8] = c_str.to_bytes();
+    let str_slice: &str = std::str::from_utf8(buf).unwrap();
+    let str_buf: String = str_slice.to_owned();
+
+    //produce a new string
+    let result = String::from(str_buf + " append from Rust");
+
+    //create C string for output
+    let c_string = CString::new(result).unwrap();
+    let ret: *mut c_char = unsafe {mem::transmute(c_string.as_ptr())};
+    mem::forget(c_string); // To prevent deallocation by Rust
+    ret
+}
+
+#[no_mangle]
+pub extern "C" fn rs_int_in_int_out(input: c_int) -> c_int{
     input*2
 }
 
 #[no_mangle]
-pub extern fn rs_string_in_string_out(s_raw: *const c_char, out: *mut c_char) -> c_int {
+pub extern "C" fn rs_string_in_string_out(s_raw: *const c_char, out: *mut c_char) -> c_int {
     // take string from the input C string
     if s_raw.is_null() { return 0; }
 
@@ -41,7 +66,7 @@ pub extern fn rs_string_in_string_out(s_raw: *const c_char, out: *mut c_char) ->
 }
 
 #[no_mangle]
-pub extern fn rs_numeric_array_in_numeric_array_out(src_raw: *const c_int, dst: *mut c_int, size: c_int) -> c_int {
+pub extern "C" fn rs_numeric_array_in_numeric_array_out(src_raw: *const c_int, dst: *mut c_int, size: c_int) -> c_int {
     // Convert to borrowed pointers.
     let src = unsafe { std::slice::from_raw_parts(src_raw, size as usize) };
     let mut res: Vec<c_int> = Vec::with_capacity(10);
@@ -67,7 +92,7 @@ pub struct SomeStruct {
 }
 
 #[no_mangle]
-pub extern fn rs_struct_out() -> SomeStruct {
+pub extern "C" fn rs_struct_out() -> SomeStruct {
     let sss = SomeStruct {
         some_item: 3 as c_int,
         another_item: 4 as c_int,
@@ -86,13 +111,13 @@ pub struct OtherStruct {
 }
 
 #[no_mangle]
-pub extern fn rs_object_as_struct_in_bool_out(data: OtherStruct) -> bool {
+pub extern "C" fn rs_object_as_struct_in_bool_out(data: OtherStruct) -> bool {
     println!("{}, {}, {}",data.int_setting, data.float_setting, data.bool_setting);
     true
 }
 
 // #[no_mangle]
-// pub extern fn rs_num_c_func_with_c_callback(num: c_int, callback: extern fn(c_int)) {
+// pub extern "C" fn rs_num_c_func_with_c_callback(num: c_int, callback: extern "C" fn(c_int)) {
 //     //Left here for the reference
 //     let handle = thread::spawn(move || {
 //         let holder = unsafe {(*MUT_STATE).clone()};
@@ -109,7 +134,7 @@ pub extern fn rs_object_as_struct_in_bool_out(data: OtherStruct) -> bool {
 static mut MUT_STATE: *const Arc<Mutex<c_int>> = std::ptr::null();
 
 #[no_mangle]
-pub  extern fn rs_set_initial_state(state: c_int) {
+pub  extern "C" fn rs_set_initial_state(state: c_int) {
     unsafe {
         let singleton = Arc::new(Mutex::new(state));
         MUT_STATE = mem::transmute(Box::new(singleton));
@@ -118,7 +143,7 @@ pub  extern fn rs_set_initial_state(state: c_int) {
 
 
 #[no_mangle]
-pub extern fn rs_slow_func(num: c_int) -> c_int {
+pub extern "C" fn rs_slow_func(num: c_int) -> c_int {
     //If we take the lock before this long 1 sec "computation"
     //it will cause functions to run sequentally because of locks
     thread::sleep(Duration::new(1, 0));
