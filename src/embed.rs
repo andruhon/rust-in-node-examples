@@ -1,7 +1,8 @@
+#![feature(alloc_system)]
 #![feature(const_fn)]
 extern crate libc;
 
-use libc::{c_char,c_int, c_float, c_void};
+use libc::{c_char,c_int, c_float};
 use std::ffi::{CStr,CString};
 use std::vec::{Vec};
 
@@ -10,11 +11,15 @@ use std::time::Duration;
 
 use std::sync::{Mutex, Arc};
 
-#[no_mangle]
-pub extern "C" fn rs_drop(ptr: *const c_void) {
-  //Used to drop rust allocated pointers from C
-  mem::drop(ptr);
-}
+// #[no_mangle]
+// pub extern "C" fn rs_drop(ptr: *const c_void) {
+//   // We might need this function to allow outer app to drop things from rust
+//   // However as docs say https://doc.rust-lang.org/book/custom-allocators.html#default-allocator
+//   // Rust using alloc_system for libs, so we can easily use free in C/C++ code
+//   // There's also feature(alloc_system) in the head just in case
+//   // Used to drop rust allocated pointers from C
+//   mem::drop(ptr);
+// }
 
 #[no_mangle]
 pub extern "C" fn rs_rust_managed_string(s_raw: *const c_char) -> *mut c_char {

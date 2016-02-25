@@ -37,7 +37,6 @@ struct OtherStruct {
 /* extern interface for Rust functions */
 extern "C" {
   int32_t rs_int_in_int_out(int32_t input);
-  void* rs_drop(void* input);
   char* rs_rust_managed_string(char* input);
   int32_t rs_string_in_string_out(char* input, char* output);
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
@@ -54,8 +53,6 @@ extern "C" {
 const int ADDON_BUFFER_SIZE = 16383;
 
 //Header end
-
-
 
 NAN_METHOD(int_in_int_out) {
   int value = info[0]->IsUndefined() ? 0 : Nan::To<int>(info[0]).FromJust();
@@ -74,8 +71,7 @@ NAN_METHOD(rs_rust_managed_string) {
   /* get string from rust */
   char *from_rust = rs_rust_managed_string(cstr);
   info.GetReturnValue().Set(Nan::New<String>(from_rust).ToLocalChecked());
-  //free(from_rust);
-  rs_drop(from_rust);
+  free(from_rust);
 }
 
 NAN_METHOD(string_in_string_out) {
