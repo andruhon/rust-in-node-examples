@@ -25,20 +25,20 @@ struct SomeStruct {
     int some_item;
     int another_item;
     int test;
-    float float_item;
+    double float_item;
 };
 
 struct OtherStruct {
   int int_setting;
-  float float_setting;
+  double float_setting;
   bool bool_setting;
 };
 
 /* extern interface for Rust functions */
 extern "C" {
   int32_t rs_int_in_int_out(int32_t input);
-  char* rs_rust_managed_string(char* input);
-  int32_t rs_string_in_string_out(char* input, char* output);
+  char* rs_string_in_string_with_append_from_rust_back(char* input);
+  int32_t rs_string_in_string_back_to_buffer(char* input, char* output);
   int32_t rs_numeric_array_in_numeric_array_out(int32_t src[4], int32_t dst[4], int32_t size);
   SomeStruct rs_struct_out();
   bool rs_object_as_struct_in_bool_out(OtherStruct object_as_struct_in_bool_out);
@@ -61,7 +61,7 @@ NAN_METHOD(int_in_int_out) {
   info.GetReturnValue().Set(result);
 }
 
-NAN_METHOD(rs_rust_managed_string) {
+NAN_METHOD(rs_string_in_string_with_append_from_rust_back) {
   Nan::HandleScope scope;
   String::Utf8Value cmd(info[0]);
   string s = string(*cmd);
@@ -69,7 +69,7 @@ NAN_METHOD(rs_rust_managed_string) {
   strcpy(cstr, s.c_str());
 
   /* get string from rust */
-  char *from_rust = rs_rust_managed_string(cstr);
+  char *from_rust = rs_string_in_string_with_append_from_rust_back(cstr);
   info.GetReturnValue().Set(Nan::New<String>(from_rust).ToLocalChecked());
   free(from_rust);
 }
@@ -86,7 +86,7 @@ NAN_METHOD(string_in_string_out) {
   char* from_rust = (char*) malloc (ADDON_BUFFER_SIZE);
 
   /* get string from rust */
-  int32_t len = rs_string_in_string_out(cstr, from_rust);
+  int32_t len = rs_string_in_string_back_to_buffer(cstr, from_rust);
   info.GetReturnValue().Set(Nan::New<String>(from_rust, len).ToLocalChecked());
 
   free(from_rust);
@@ -102,7 +102,7 @@ NAN_METHOD(bin_string_in_string_out) {
 
   /* some buffer, output string should not exceed this buffer */
   char* from_rust = (char*) malloc (ADDON_BUFFER_SIZE);
-  int32_t from_rust_len = rs_string_in_string_out(cstr, from_rust);
+  int32_t from_rust_len = rs_string_in_string_back_to_buffer(cstr, from_rust);
 
   info.GetReturnValue().Set(Nan::New<String>(from_rust, from_rust_len).ToLocalChecked());
   free(from_rust);
@@ -243,8 +243,8 @@ using v8::FunctionTemplate;
 NAN_MODULE_INIT(InitAll) {;
   Nan::Set(target, Nan::New("int_in_int_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(int_in_int_out)).ToLocalChecked());
-  Nan::Set(target, Nan::New("rs_rust_managed_string").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(rs_rust_managed_string)).ToLocalChecked());
+  Nan::Set(target, Nan::New("rs_string_in_string_with_append_from_rust_back").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(rs_string_in_string_with_append_from_rust_back)).ToLocalChecked());
   Nan::Set(target, Nan::New("string_in_string_out").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(string_in_string_out)).ToLocalChecked());
   Nan::Set(target, Nan::New("bin_string_in_string_out").ToLocalChecked(),

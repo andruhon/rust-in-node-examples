@@ -2,7 +2,7 @@
 #![feature(const_fn)]
 extern crate libc;
 
-use libc::{c_char,c_int, c_float};
+use libc::{c_char, c_int, c_double};
 use std::ffi::{CStr,CString};
 use std::vec::{Vec};
 
@@ -21,18 +21,19 @@ use std::sync::{Mutex, Arc};
 //   mem::drop(ptr);
 // }
 
+// Take c string in and return c string back
+// with leaking result string and allowing receiver to deallocate it when needed
+// this aproach presumes that rust and receiver both using the same allocation mechanism
+// see https://doc.rust-lang.org/book/custom-allocators.html#default-allocator
+// and https://github.com/rust-lang/rust/issues/31956
 #[no_mangle]
-pub extern "C" fn rs_rust_managed_string(s_raw: *const c_char) -> *mut c_char {
+pub extern "C" fn rs_string_in_string_with_append_from_rust_back(s_raw: *const c_char) -> *mut c_char {
     // take string from the input C string
     if s_raw.is_null() { panic!(); }
-
-    let c_str: &CStr = unsafe { CStr::from_ptr(s_raw) };
-    let buf: &[u8] = c_str.to_bytes();
-    let str_slice: &str = std::str::from_utf8(buf).unwrap();
-    let str_buf: String = str_slice.to_owned();
+    let s: String = unsafe {CStr::from_ptr(s_raw).to_string_lossy().into_owned()};
 
     //produce a new string
-    let result = String::from(str_buf + " append from Rust");
+    let result = String::from(s + " append from Rust");
 
     //create C string for output
     let c_string = CString::new(result).unwrap();
@@ -46,18 +47,17 @@ pub extern "C" fn rs_int_in_int_out(input: c_int) -> c_int{
     input*2
 }
 
+// Take string and write back into mutable pointer allocated in C++/V8
+// without need to leak this value by rust
+// with this approach we're sure that it is allocated and de-allocated by the same code
 #[no_mangle]
-pub extern "C" fn rs_string_in_string_out(s_raw: *const c_char, out: *mut c_char) -> c_int {
+pub extern "C" fn rs_string_in_string_back_to_buffer(s_raw: *const c_char, out: *mut c_char) -> c_int {
     // take string from the input C string
     if s_raw.is_null() { return 0; }
-
-    let c_str: &CStr = unsafe { CStr::from_ptr(s_raw) };
-    let buf: &[u8] = c_str.to_bytes();
-    let str_slice: &str = std::str::from_utf8(buf).unwrap();
-    let str_buf: String = str_slice.to_owned();
+    let s: String = unsafe {CStr::from_ptr(s_raw).to_string_lossy().into_owned()};
 
     //produce a new string
-    let result = String::from(str_buf + " append from Rust");
+    let result = String::from(s + " append from Rust");
     let len = result.len();
 
     //create C string for output
@@ -93,7 +93,7 @@ pub struct SomeStruct {
     some_item: c_int,
     another_item: c_int,
     test: c_int,
-    float_item: c_float
+    float_item: c_double
 }
 
 #[no_mangle]
@@ -102,7 +102,7 @@ pub extern "C" fn rs_struct_out() -> SomeStruct {
         some_item: 3 as c_int,
         another_item: 4 as c_int,
         test: 5 as c_int,
-        float_item: 0.7_f32 as c_float
+        float_item: 0.7_f32 as c_double
     };
     return sss;
 }
@@ -111,7 +111,7 @@ pub extern "C" fn rs_struct_out() -> SomeStruct {
 #[repr(C)]
 pub struct OtherStruct {
   int_setting: c_int,
-  float_setting: c_float,
+  float_setting: c_double,
   bool_setting: bool
 }
 

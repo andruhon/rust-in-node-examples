@@ -27,6 +27,16 @@ console.log(addon.object_as_struct_in_bool_out({
 //   console.log("JS timeout...");
 // },3000);
 
+console.log(os.EOL+"rs_string_in_string_with_append_from_rust_back:");
+var inString = "String from JS UTF-8 with a lot of non latin symbols dfgsdf gsdf gs dfg sdfg sdf gsdf gsdf gsdf gsdfg sdfg sdfg serg sdfgx dfg dergzx dfg xdrtgx dgfhx fgh АБВГДеёжйклмнопрстуфхцчшщЫЭЮЯ";
+var lastOutStr;
+for (var i = 0; i <=100; i++) {
+  lastOutStr = addon.rs_string_in_string_with_append_from_rust_back(inString)
+  assert(lastOutStr==(inString+" append from Rust"), "Should not loose data");
+}
+console.log("100x",lastOutStr);
+
+//Callbacks and internal state
 console.log(os.EOL+"set_initial_state:");
 addon.set_initial_state(2);
 
@@ -37,12 +47,3 @@ addon.slow_func_in_c_thread(12, function(){
   addon.slow_func_in_c_thread(14, console.log);
   addon.slow_func_in_c_thread(18, console.log);
 });
-
-console.log(os.EOL+"rust_managed_string:");
-var inString = "String from JS UTF-8 with a lot of non latin symbols dfgsdf gsdf gs dfg sdfg sdf gsdf gsdf gsdf gsdfg sdfg sdfg serg sdfgx dfg dergzx dfg xdrtgx dgfhx fgh АБВГДеёжйклмнопрстуфхцчшщЫЭЮЯ";
-var lastOutStr;
-for (var i = 0; i <=100; i++) {
-  lastOutStr = addon.rs_rust_managed_string(inString)
-  assert(lastOutStr==(inString+" append from Rust"), "Should not loose data");
-}
-console.log("100x",lastOutStr);
