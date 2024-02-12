@@ -1,3 +1,5 @@
+# This repository is archived
+
 Rust in node examples
 =====================
 
